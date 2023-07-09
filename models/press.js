@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const PressSchema = new Schema({
   user: {
@@ -13,7 +13,7 @@ const PressSchema = new Schema({
     type: String,
   },
   social_media: {
-    type: Array,
+    type: Object,
   },
   interview_links: {
     type: Array,
@@ -29,6 +29,6 @@ const PressSchema = new Schema({
   }
 })
 
-const Press = models.Press || model("Press", PressSchema);
+const Press = mongoose.models.Press || model("Press", PressSchema);
 
 export default Press

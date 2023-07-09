@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const PodcasterSchema = new Schema({
   user: {
@@ -6,25 +6,34 @@ const PodcasterSchema = new Schema({
     ref: 'User',
     require: [true, 'user is required!'],
   },
+  podcast_name: {
+    type: String,
+  },
   topic_categories: {
     type: Array,
   },
-  short_bio: {
+  podcast_link: {
     type: String,
   },
-  experience: {
+  bio: {
     type: String,
   },
-  mission: {
-    type: String,
+  highlights: {
+    type: Array,
   },
   social_media: {
-    type: Array,
+    type: Object,
   },
-  interview_links: {
-    type: Array,
+  transmission_date: {
+    type: [Date],
+  },
+  guest_bio: {
+    type: String,
   },
   booking_details: {
+    type: Array,
+  },
+  episode_links: {
     type: Array,
   },
   record_preference: {
@@ -38,6 +47,6 @@ const PodcasterSchema = new Schema({
   }
 })
 
-const Podcaster = models.Podcaster || model("Podcaster", PodcasterSchema);
+const Podcaster = mongoose.models.Podcaster || model("Podcaster", PodcasterSchema);
 
 export default Podcaster

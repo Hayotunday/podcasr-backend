@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const UserSchema = new Schema({
   email: {
@@ -17,9 +17,8 @@ const UserSchema = new Schema({
     require: [true, 'password is required!'],
     trim: true
   },
-  token: {
+  refresh_token: {
     type: String,
-    require: [true, 'password is required!'],
     unique: true
   },
   email_verified: {
@@ -31,11 +30,20 @@ const UserSchema = new Schema({
   },
   profile_type: {
     type: String,
+  },
+  createdProfile: {
+    type: Boolean,
+  },
+  saved_list: {
+    type: Array,
+  },
+  recent: {
+    type: Array,
   }
 }, {
   timestamps: true
 })
 
-const User = models.User || model("User", UserSchema);
+const User = mongoose.models.User || model("User", UserSchema);
 
 export default User

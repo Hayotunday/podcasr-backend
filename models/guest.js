@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const GuestSchema = new Schema({
   user: {
@@ -7,25 +7,22 @@ const GuestSchema = new Schema({
     require: [true, 'user is required!'],
   },
   category: {
-    type: String,
-  },
-  podcast_link: {
-    type: String,
-  },
-  bio: {
-    type: String,
-  },
-  highlights: {
     type: Array,
+  },
+  short_bio: {
+    type: String,
+  },
+  mission: {
+    type: String,
+  },
+  experience_bio: {
+    type: String,
   },
   social_media: {
-    type: Array,
+    type: Object,
   },
-  transmission_time: {
-    type: Array,
-  },
-  guest_bio: {
-    type: Array,
+  interview_link: {
+    type: String,
   },
   record_preference: {
     type: Array,
@@ -41,6 +38,6 @@ const GuestSchema = new Schema({
   }
 })
 
-const Guest = models.Guest || model("Guest", GuestSchema);
+const Guest = mongoose.models.Guest || model("Guest", GuestSchema);
 
 export default Guest
