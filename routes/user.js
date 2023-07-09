@@ -14,72 +14,92 @@ const router = express.Router();
 
 // User
 router.get('/', async (req, res) => {
-  await User.find()
-    .then((users) => {
-      return res.status(200).json({ users })
-    })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.find()
+      .then((users) => {
+        return res.status(200).json({ users })
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.get('/profile', verifyJwt, async (req, res) => {
-  await User.findOne({ email: req.user })
-    .then((users) => {
-      return res.status(200).json({ user: users })
-    })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.findOne({ email: req.user })
+      .then((users) => {
+        return res.status(200).json({ user: users })
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.get('/:id', async (req, res) => {
-  await User.findById(req.params.id)
-    .then((users) => {
-      const new_user = { ...users, refresh_token: "" }
-      res.json(new_user)
-    })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.findById(req.params.id)
+      .then((users) => {
+        const new_user = { ...users, refresh_token: "" }
+        return res.json(new_user)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.delete('/:id', verifyJwt, async (req, res) => {
-  await User.findByIdAndDelete(req.params.id)
-    .then(() => { res.json('User deleted!') })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.findByIdAndDelete(req.params.id)
+      .then(() => { return res.json('User deleted!') })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 
 // PROFILE TYPE ROUTES
 router.get('/profile-type', async (req, res) => {
-  await User.find()
-    .then((users) => {
-      const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
-      res.json(new_user)
-    })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.find()
+      .then((users) => {
+        const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
+        return res.json(new_user)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.get('/profile-type/my-profile', verifyJwt, async (req, res) => {
-
   try {
     const userFound = await User.findOne({ email: req.user })
+
     if (userFound.profile_type === "Podcaster") {
       await Podcaster.findOne({ user: userFound._id })
         .then((users) => {
           users.user = userFound
           return res.status(200).json(users)
         })
-        .catch((err) => { res.status(400).json('Error: ' + err) })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (userFound.profile_type === "Guest") {
       await Guest.findOne({ user: userFound._id })
         .then((users) => {
           users.user = userFound
           return res.status(200).json(users)
         })
-        .catch((err) => { res.status(400).json('Error: ' + err) })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (userFound.profile_type === "Press") {
       await Press.findOne({ user: userFound._id })
         .then((users) => {
           users.user = userFound
           return res.status(200).json(users)
         })
-        .catch((err) => { res.status(400).json('Error: ' + err) })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
     }
   } catch (error) {
     return res.sendStatus(500)
@@ -88,24 +108,32 @@ router.get('/profile-type/my-profile', verifyJwt, async (req, res) => {
 });
 
 router.get('/profile-type/:id', async (req, res) => {
-  await User.findOne({ email: req.body.email })
-    .then((users) => {
-      const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
-      res.json(new_user)
-    })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.findOne({ email: req.body.email })
+      .then((users) => {
+        const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
+        return res.json(new_user)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.patch('/profile-type', verifyJwt, async (req, res) => {
   const { profile_type } = req.body
 
-  await User.updateOne(
-    { email: req.user },
-    { $set: { profile_type: profile_type } }
-  )
-  await User.findOne({ email: req.user })
-    .then((user) => { res.status(200).json({ profile_type: user.profile_type }) })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.updateOne(
+      { email: req.user },
+      { $set: { profile_type: profile_type } }
+    )
+    await User.findOne({ email: req.user })
+      .then((user) => { return res.status(200).json({ profile_type: user.profile_type }) })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 router.post('/profile-type/add', verifyJwt, async (req, res) => {
@@ -179,13 +207,17 @@ router.post('/profile-type/add', verifyJwt, async (req, res) => {
 
 // PASSWORD
 router.patch('/password', verifyJwt, async (req, res) => {
-  await User.updateOne(
-    { email: req.user },
-    { $set: { password: req.body.password } }
-  )
-  await User.findOne({ email: req.body.email })
-    .then((user) => { res.json(user) })
-    .catch((err) => { res.status(400).json('Error: ' + err) })
+  try {
+    await User.updateOne(
+      { email: req.user },
+      { $set: { password: req.body.password } }
+    )
+    await User.findOne({ email: req.body.email })
+      .then((user) => { return res.status(200).json(user) })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 export default router
