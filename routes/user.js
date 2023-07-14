@@ -1,4 +1,5 @@
 import express from "express";
+import multer from 'multer'
 
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
@@ -7,6 +8,8 @@ import Press from "../models/press.js";
 
 import { confirmJwt } from "../middleware/confirmjwt.js";
 import { mailer } from "../middleware/verifymail.js";
+
+
 
 const router = express.Router();
 

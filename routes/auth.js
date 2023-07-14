@@ -102,7 +102,7 @@ router.post('/register', async (req, res) => {
             token: token
           })
           await newToken.save()
-          const url = `http://localhost:3000/verified?id=${_id}&token=${token}`
+          const url = `${process.env.BASE_URL}/verified?id=${_id}&token=${token}`
           const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -153,7 +153,7 @@ router.post('/resend-mail', async (req, res) => {
       token: token
     })
     await newToken.save()
-    const url = `http://localhost:3000/verified?id=${id}&token=${token}`
+    const url = `${process.env.BASE_URL}/verified?id=${id}&token=${token}`
     const message = `<div style="">
                       <h4>
                       Good day ${name},
