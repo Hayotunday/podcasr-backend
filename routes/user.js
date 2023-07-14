@@ -5,7 +5,7 @@ import Guest from "../models/guest.js";
 import Podcaster from "../models/podcaster.js";
 import Press from "../models/press.js";
 
-import { verifyJwt } from "../middleware/verifyjwt.js";
+import { confirmJwt } from "../middleware/confirmjwt.js";
 import { mailer } from "../middleware/verifymail.js";
 
 const router = express.Router();
@@ -25,13 +25,84 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/profile', verifyJwt, async (req, res) => {
+router.get('/profile', confirmJwt, async (req, res) => {
   try {
     await User.findOne({ email: req.user })
       .then((users) => {
         return res.status(200).json({ user: users })
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.get('/profiles', async (req, res) => {
+  try {
+
+    const guests = await Guest.find().populate('user')
+    const podcasters = await Podcaster.find().populate('user')
+    const presses = await Press.find().populate('user')
+
+    const profiles = [...guests, ...podcasters, ...presses]
+
+    return res.status(200).json(profiles)
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.get('/profile-type/my-profile', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (userFound.profile_type === "Podcaster") {
+      await Podcaster.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Guest") {
+      await Guest.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Press") {
+      await Press.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    }
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.get('/profile-type/:id', async (req, res) => {
+  try {
+    const userFound = await User.findById(req.params.id)
+
+    if (userFound.profile_type === "Podcaster") {
+      await Podcaster.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Guest") {
+      await Guest.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Press") {
+      await Press.findOne({ user: userFound._id }).populate('user')
+        .then((users) => {
+          return res.status(200).json(users)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    }
   } catch (error) {
     return res.sendStatus(500)
   }
@@ -50,93 +121,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', verifyJwt, async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id)
-      .then(() => { return res.json('User deleted!') })
-      .catch((err) => { return res.status(400).json('Error: ' + err) })
-  } catch (error) {
-    return res.sendStatus(500)
-  }
-});
 
 
-// PROFILE TYPE ROUTES
-router.get('/profile-type', async (req, res) => {
-  try {
-    await User.find()
-      .then((users) => {
-        const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
-        return res.json(new_user)
-      })
-      .catch((err) => { return res.status(400).json('Error: ' + err) })
-  } catch (error) {
-    return res.sendStatus(500)
-  }
-});
-
-router.get('/profile-type/my-profile', verifyJwt, async (req, res) => {
-  try {
-    const userFound = await User.findOne({ email: req.user })
-
-    if (userFound.profile_type === "Podcaster") {
-      await Podcaster.findOne({ user: userFound._id })
-        .then((users) => {
-          users.user = userFound
-          return res.status(200).json(users)
-        })
-        .catch((err) => { return res.status(400).json('Error: ' + err) })
-    } else if (userFound.profile_type === "Guest") {
-      await Guest.findOne({ user: userFound._id })
-        .then((users) => {
-          users.user = userFound
-          return res.status(200).json(users)
-        })
-        .catch((err) => { return res.status(400).json('Error: ' + err) })
-    } else if (userFound.profile_type === "Press") {
-      await Press.findOne({ user: userFound._id })
-        .then((users) => {
-          users.user = userFound
-          return res.status(200).json(users)
-        })
-        .catch((err) => { return res.status(400).json('Error: ' + err) })
-    }
-  } catch (error) {
-    return res.sendStatus(500)
-  }
-
-});
-
-router.get('/profile-type/:id', async (req, res) => {
-  try {
-    await User.findOne({ email: req.body.email })
-      .then((users) => {
-        const new_user = { ...users, user: { ...users.user, refresh_token: "" } }
-        return res.json(new_user)
-      })
-      .catch((err) => { return res.status(400).json('Error: ' + err) })
-  } catch (error) {
-    return res.sendStatus(500)
-  }
-});
-
-router.patch('/profile-type', verifyJwt, async (req, res) => {
-  const { profile_type } = req.body
-
-  try {
-    await User.updateOne(
-      { email: req.user },
-      { $set: { profile_type: profile_type } }
-    )
-    await User.findOne({ email: req.user })
-      .then((user) => { return res.status(200).json({ profile_type: user.profile_type }) })
-      .catch((err) => { return res.status(400).json('Error: ' + err) })
-  } catch (error) {
-    return res.sendStatus(500)
-  }
-});
-
-router.post('/profile-type/add', verifyJwt, async (req, res) => {
+// POST ROUTES
+router.post('/profile-type/add', confirmJwt, async (req, res) => {
   const { profile_type } = req.body
 
   try {
@@ -164,24 +152,36 @@ router.post('/profile-type/add', verifyJwt, async (req, res) => {
       });
 
       await newProfile.save()
-        .then(async (profile) => { await User.findByIdAndUpdate({ _id: req.body.user }, { $set: { createdProfile: true } }); return res.status(201).json(profile) })
+        .then(async (profile) => {
+          await User.findByIdAndUpdate(
+            { _id: req.body.user },
+            { $set: { createdProfile: true } }
+          );
+          return res.status(201).json(profile)
+        })
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (profile_type === "Guest") {
       const newProfile = new Guest({
         user: req.body.user,
-        category: req.body.category,
+        topic_categories: req.body.category,
         short_bio: req.body.short_bio,
         mission: req.body.mission,
         experience_bio: req.body.experience_bio,
         social_media: req.body.social_media,
-        interview_link: req.body.interview_link,
+        interview_links: req.body.interview_link,
         record_preference: req.body.record_preference,
         own_podcast: req.body.own_podcast,
         promo_expect: false,
       });
-
+      rs
       await newProfile.save()
-        .then(async (profile) => { await User.findByIdAndUpdate({ _id: req.body.user }, { $set: { createdProfile: true } }); return res.status(201).json(profile) })
+        .then(async (profile) => {
+          await User.findByIdAndUpdate(
+            { _id: req.body.user },
+            { $set: { createdProfile: true } }
+          );
+          return res.status(201).json(profile)
+        })
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (profile_type === "Press") {
       const newProfile = new Press({
@@ -196,7 +196,144 @@ router.post('/profile-type/add', verifyJwt, async (req, res) => {
       });
 
       await newProfile.save()
-        .then(async (profile) => { await User.findByIdAndUpdate({ _id: req.body.user }, { $set: { createdProfile: true } }); return res.status(201).json(profile) })
+        .then(async (profile) => {
+          await User.findByIdAndUpdate(
+            { _id: req.body.user },
+            { $set: { createdProfile: true } }
+          );
+          return res.status(201).json(profile)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    }
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+// PATCH ROUTES
+router.patch('/profile-type', confirmJwt, async (req, res) => {
+  const { profile_type } = req.body
+
+  try {
+    await User.updateOne(
+      { email: req.user },
+      { $set: { profile_type: profile_type } }
+    )
+    await User.findOne({ email: req.user })
+      .then((user) => { return res.status(200).json({ profile_type: user.profile_type }) })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
+  const { profile_type } = req.body
+
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please sign up!" })
+    if (userFound.createdProfile === true) return res.status(401).json({ message: "Profile already exists" })
+
+    if (profile_type === "Podcaster") {
+      Podcaster.updateOne({ user: userFound._id }, {
+        podcast_name: req.body.podcast_name,
+        user: req.body.user,
+        podcast_link: req.body.podcast_link,
+        bio: req.body.bio,
+        highlights: req.body.highlights,
+        social_media: req.body.social_media,
+        guest_bio: req.body.guest_bio,
+        booking_details: req.body.booking_details,
+        episode_links: req.body.episode_links,
+        record_preference: req.body.record_preference,
+        promo_expect: req.body.promo_expect,
+        need_guest: req.body.need_guest
+      })
+        .then((profile) => {
+          return res.status(201).json(profile)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (profile_type === "Guest") {
+      Guest.updateOne({ user: userFound._id }, {
+        user: req.body.user,
+        short_bio: req.body.short_bio,
+        mission: req.body.mission,
+        experience_bio: req.body.experience_bio,
+        social_media: req.body.social_media,
+        interview_links: req.body.interview_link,
+        record_preference: req.body.record_preference,
+        own_podcast: req.body.own_podcast,
+        promo_expect: false,
+      })
+        .then((profile) => {
+          return res.status(201).json(profile)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (profile_type === "Press") {
+      Press.updateOne({ user: userFound._id }, {
+        user: req.body.user,
+        short_bio: req.body.short_bio,
+        experience: req.body.experience,
+        social_media: req.body.social_media,
+        interview_links: req.body.interview_links,
+        own_podcast: req.body.own_podcast,
+        contact_me: req.body.contact_me,
+        podcast_alert: req.body.podcast_alert
+      })
+        .then((profile) => {
+          return res.status(201).json(profile)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    }
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/image', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    await User.updateOne(
+      { email: req.user },
+      { $set: { image: req.body.image } }
+    )
+      .then(() => {
+        return res.status(200)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/category', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    if (userFound.profile_type === "Podcaster") {
+      await Podcaster.updateOne(
+        { user: userFound._id },
+        { $set: { topic_categories: req.body.category } }
+      )
+        .then((users) => {
+          return res.status(200)
+        })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Guest") {
+      await Guest.updateOne(
+        { user: userFound._id },
+        { topic_categories: req.body.category }
+      )
+        .then((users) => {
+          return res.status(200)
+        })
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     }
   } catch (error) {
@@ -205,15 +342,11 @@ router.post('/profile-type/add', verifyJwt, async (req, res) => {
 });
 
 
-// PASSWORD
-router.patch('/password', verifyJwt, async (req, res) => {
+// DELETE ROUTES
+router.delete('/:id', confirmJwt, async (req, res) => {
   try {
-    await User.updateOne(
-      { email: req.user },
-      { $set: { password: req.body.password } }
-    )
-    await User.findOne({ email: req.body.email })
-      .then((user) => { return res.status(200).json(user) })
+    await User.findByIdAndDelete(req.params.id)
+      .then(() => { return res.json('User deleted!') })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
     return res.sendStatus(500)

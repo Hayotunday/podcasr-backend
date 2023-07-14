@@ -7,6 +7,7 @@ import crypto from 'crypto'
 
 import User from "../models/user.js";
 import Token from '../models/token.js'
+import ResetCode from '../models/resetcode.js';
 
 import { mailer } from '../middleware/verifymail.js';
 
@@ -31,7 +32,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: "User Email or Password doesn't match" })
     }
 
-    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
+    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "30d" })
     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
     await User.updateOne(
@@ -39,7 +40,7 @@ router.post('/login', async (req, res) => {
       { $set: { refresh_token: refreshToken } })
 
     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-    return res.status(200).json({ accessToken })
+    return res.status(200).json({ accessToken, id: result._id })
   } catch (error) {
     return res.status(500).json({ message: "Server error!" })
   }
@@ -102,8 +103,23 @@ router.post('/register', async (req, res) => {
           })
           await newToken.save()
           const url = `http://localhost:3000/verified?id=${_id}&token=${token}`
+          const message = `<div style="">
+                      <h4>
+                      Good day ${name},
+                      </h4>
+                    
+                      <P>
+                        We are happy to have you. To be able to connect with podcast and guest please verify your email by clicking on link below 
+                      </P>
+                    
+                      <p>
+                      <a href="${url}" target="_blank"><b>Verify email</b></a>
+                      </p>
 
-          await mailer(email, name, url)
+                      <p>Link expires in 1 hour</p>
+                    </div>`
+
+          await mailer(email, message)
           return res.sendStatus(201);
         })
         .catch((err) => { res.status(400).json('Error: ' + err) })
@@ -148,13 +164,14 @@ router.post('/resend-mail', async (req, res) => {
                       </P>
                     
                       <p>
-                      <a href="${url}" target="_blank">Verify email</a>
+                      <a href="${url}" target="_blank"><b>Verify email</b></a>
                       </p>
+                    
+                    <p>Link expires in 1 hour</p>
                     </div>`
 
     await mailer(email, message)
     return res.sendStatus(200);
-
   } catch (error) {
     res.status(500).json({ message: 'Server error!' });
   }
@@ -213,6 +230,105 @@ router.patch('/verify-mail', async (req, res) => {
 
     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
     return res.status(200).json({ accessToken })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+
+router.post('/password/forgot', async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.body.email })
+    if (!userFound) return res.status(400).json("No user found with this email. Please sign up!")
+
+    const { _id, name, email } = userFound
+    await ResetCode.deleteMany({ user: _id })
+
+    const code = crypto.randomInt(0, 99999).toString().padStart(5, "0")
+    const message = `<div style="">
+                      <h4>
+                      Good day ${name},
+                      </h4>
+                    
+                      <P>
+                        Forgot your password, use the code below to create a new one. 
+                      </P>
+                    
+                      <h1><b>${code}</b></h1>
+                    
+                    <p>code expires in 1 hour</p>
+                    </div>`
+
+    await mailer(email, message)
+
+    const newResetCode = await ResetCode({
+      user: _id,
+      reset_code: code
+    })
+    await newResetCode.save()
+      .then(() => { return res.status(200).json({ message: "email sent", email }) })
+      .catch(() => { return res.sendStatus(500) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+
+router.post('/password/reset', async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.body.email })
+    if (!userFound) return res.status(400).json("No user found with this email. Please sign up!")
+
+    const { _id } = userFound
+
+    const codeFound = await ResetCode.findOne({ user: _id, reset_code: req.body.code })
+    if (codeFound.reset_code === req.body.code) await ResetCode.deleteOne({ user: _id })
+    return res.status(200).json({ message: "successful" })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+
+// router.patch('/password/resend-code', async (req, res) => {
+//   try {
+//     const userFound = await User.findById(req.body.id)
+//     if (!userFound) return res.status(400).json("Invalid link")
+
+//     if (userFound.email_verified) return res.status(400).json("Invalid link")
+
+//     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
+//     if (!tokenFound) return res.status(400).json("Invalid link")
+
+//     await User.findByIdAndUpdate(
+//       req.body.id,
+//       { $set: { email_verified: true } }
+//     )
+//     await Token.deleteOne({ token: req.body.token })
+
+//     const { email } = userFound
+//     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
+//     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
+
+//     await User.updateOne(
+//       { email: email },
+//       { $set: { refresh_token: refreshToken } }
+//     )
+
+//     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+//     return res.status(200).json({ accessToken })
+//   } catch (error) {
+//     return res.sendStatus(500)
+//   }
+// });
+
+
+router.post('/password/create', async (req, res) => {
+  try {
+    const pass = await bcrypt.hash(req.body.password, 10)
+    await User.findByIdAndUpdate({ _id: req.body.id }, { $set: { password: pass } })
+      .then(() => { return res.status(200).json({ message: "successful" }) })
+      .catch(() => { return res.sendStatus(500) })
   } catch (error) {
     return res.sendStatus(500)
   }

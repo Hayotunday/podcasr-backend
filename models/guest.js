@@ -6,7 +6,7 @@ const GuestSchema = new Schema({
     ref: 'User',
     require: [true, 'user is required!'],
   },
-  category: {
+  topic_categories: {
     type: Array,
   },
   short_bio: {
@@ -21,8 +21,8 @@ const GuestSchema = new Schema({
   social_media: {
     type: Object,
   },
-  interview_link: {
-    type: String,
+  interview_links: {
+    type: Array,
   },
   record_preference: {
     type: Array,
