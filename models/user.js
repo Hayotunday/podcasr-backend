@@ -37,9 +37,11 @@ const UserSchema = new Schema({
   saved_list: {
     type: Array,
   },
-  recent: {
-    type: Array,
-  }
+  recent: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    unique: [true, 'must be unique']
+  }]
 }, {
   timestamps: true
 })

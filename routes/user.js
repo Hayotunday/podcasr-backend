@@ -1,5 +1,6 @@
 import express from "express";
 import multer from 'multer'
+import path from "path";
 
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
@@ -9,7 +10,18 @@ import Press from "../models/press.js";
 import { confirmJwt } from "../middleware/confirmjwt.js";
 import { mailer } from "../middleware/verifymail.js";
 
+const storage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, "public/Images")
+  },
+  filename: (req, file, callback) => {
+    callback(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
+  }
+})
 
+const upload = multer({
+  storage: storage
+})
 
 const router = express.Router();
 
@@ -40,6 +52,24 @@ router.get('/profile', confirmJwt, async (req, res) => {
   }
 });
 
+router.get('/profile/recents', confirmJwt, async (req, res) => {
+  try {
+    await User.findOne({ email: req.user }).populate({
+      path: 'recent',
+      select:
+        'email name email_verified image profile_type',
+    })
+      .then((rec) => { res.status(200).json(rec.recent) })
+      .catch((err) => { console.log(err); res.status(400).json(err) })
+
+    // if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    // return res.status(200).json({ recent: userFound.recent })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
 router.get('/profiles', async (req, res) => {
   try {
 
@@ -54,6 +84,7 @@ router.get('/profiles', async (req, res) => {
     return res.sendStatus(500)
   }
 });
+
 
 router.get('/profile-type/my-profile', confirmJwt, async (req, res) => {
   try {
@@ -237,22 +268,24 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
     const userFound = await User.findOne({ email: req.user })
 
     if (!userFound) return res.status(403).json({ message: "User not found. Please sign up!" })
-    if (userFound.createdProfile === true) return res.status(401).json({ message: "Profile already exists" })
+    // if (userFound.createdProfile === false) return res.status(401).json({ message: "Profile already exists" })
 
     if (profile_type === "Podcaster") {
       Podcaster.updateOne({ user: userFound._id }, {
-        podcast_name: req.body.podcast_name,
-        user: req.body.user,
-        podcast_link: req.body.podcast_link,
-        bio: req.body.bio,
-        highlights: req.body.highlights,
-        social_media: req.body.social_media,
-        guest_bio: req.body.guest_bio,
-        booking_details: req.body.booking_details,
-        episode_links: req.body.episode_links,
-        record_preference: req.body.record_preference,
-        promo_expect: req.body.promo_expect,
-        need_guest: req.body.need_guest
+        $set: {
+          podcast_name: req.body.podcast_name,
+          user: req.body.user,
+          podcast_link: req.body.podcast_link,
+          bio: req.body.bio,
+          highlights: req.body.highlights,
+          social_media: req.body.social_media,
+          guest_bio: req.body.guest_bio,
+          booking_details: req.body.booking_details,
+          episode_links: req.body.episode_links,
+          record_preference: req.body.record_preference,
+          promo_expect: req.body.promo_expect,
+          need_guest: req.body.need_guest
+        }
       })
         .then((profile) => {
           return res.status(201).json(profile)
@@ -260,15 +293,17 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (profile_type === "Guest") {
       Guest.updateOne({ user: userFound._id }, {
-        user: req.body.user,
-        short_bio: req.body.short_bio,
-        mission: req.body.mission,
-        experience_bio: req.body.experience_bio,
-        social_media: req.body.social_media,
-        interview_links: req.body.interview_link,
-        record_preference: req.body.record_preference,
-        own_podcast: req.body.own_podcast,
-        promo_expect: false,
+        $set: {
+          user: req.body.user,
+          short_bio: req.body.short_bio,
+          mission: req.body.mission,
+          experience_bio: req.body.experience_bio,
+          social_media: req.body.social_media,
+          interview_links: req.body.interview_link,
+          record_preference: req.body.record_preference,
+          own_podcast: req.body.own_podcast,
+          promo_expect: false,
+        }
       })
         .then((profile) => {
           return res.status(201).json(profile)
@@ -276,14 +311,16 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (profile_type === "Press") {
       Press.updateOne({ user: userFound._id }, {
-        user: req.body.user,
-        short_bio: req.body.short_bio,
-        experience: req.body.experience,
-        social_media: req.body.social_media,
-        interview_links: req.body.interview_links,
-        own_podcast: req.body.own_podcast,
-        contact_me: req.body.contact_me,
-        podcast_alert: req.body.podcast_alert
+        $set: {
+          user: req.body.user,
+          short_bio: req.body.short_bio,
+          experience: req.body.experience,
+          social_media: req.body.social_media,
+          interview_links: req.body.interview_links,
+          own_podcast: req.body.own_podcast,
+          contact_me: req.body.contact_me,
+          podcast_alert: req.body.podcast_alert
+        }
       })
         .then((profile) => {
           return res.status(201).json(profile)
@@ -295,7 +332,7 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
   }
 });
 
-router.patch('/profile-type/image', confirmJwt, async (req, res) => {
+router.patch('/profile-type/image', confirmJwt, upload.single('image'), async (req, res) => {
   try {
     const userFound = await User.findOne({ email: req.user })
 
@@ -303,7 +340,26 @@ router.patch('/profile-type/image', confirmJwt, async (req, res) => {
 
     await User.updateOne(
       { email: req.user },
-      { $set: { image: req.body.image } }
+      { image: req.file.filename }
+    )
+      .then(() => {
+        return res.status(200).json(res)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/recents', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    await User.updateOne(
+      { email: req.user },
+      { $set: { recent: req.body.data } }
     )
       .then(() => {
         return res.status(200)
