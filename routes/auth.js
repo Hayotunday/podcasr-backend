@@ -223,12 +223,12 @@ router.patch('/verify-mail', async (req, res) => {
     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET)
     // const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
-    await User.updateOne(
-      { email: email },
-      { $set: { refresh_token: refreshToken } }
-    )
+    // await User.updateOne(
+    //   { email: email },
+    //   { $set: { refresh_token: refreshToken } }
+    // )
 
-    res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+    // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
     return res.status(200).json({ accessToken })
   } catch (error) {
     return res.sendStatus(500)
