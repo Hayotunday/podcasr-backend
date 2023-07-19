@@ -206,12 +206,12 @@ router.get('/refresh', async (req, res) => {
 router.patch('/verify-mail', async (req, res) => {
   try {
     const userFound = await User.findById(req.body.id)
-    if (!userFound) return res.status(400).json("Invalid link")
+    if (!userFound) return res.status(400).json("Invalid link: Not Found")
 
-    if (userFound.email_verified) return res.status(400).json("Invalid link")
+    if (userFound.email_verified) return res.status(400).json("Invalid link: Verified")
 
     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
-    if (!tokenFound) return res.status(400).json("Invalid link")
+    if (!tokenFound) return res.status(400).json("Invalid link: Token")
 
     await User.findByIdAndUpdate(
       req.body.id,
