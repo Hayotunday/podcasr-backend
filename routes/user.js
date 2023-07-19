@@ -61,10 +61,20 @@ router.get('/profile/recents', confirmJwt, async (req, res) => {
     })
       .then((rec) => { res.status(200).json(rec.recent) })
       .catch((err) => { console.log(err); res.status(400).json(err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
 
-    // if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
-
-    // return res.status(200).json({ recent: userFound.recent })
+router.get('/profile/favorites', confirmJwt, async (req, res) => {
+  try {
+    await User.findOne({ email: req.user }).populate({
+      path: 'saved_list',
+      select:
+        'email name email_verified image profile_type',
+    })
+      .then((rec) => { res.status(200).json(rec.saved_list) })
+      .catch((err) => { console.log(err); res.status(400).json(err) })
   } catch (error) {
     return res.sendStatus(500)
   }
@@ -360,6 +370,25 @@ router.patch('/profile-type/recents', confirmJwt, async (req, res) => {
     await User.updateOne(
       { email: req.user },
       { $set: { recent: req.body.data } }
+    )
+      .then(() => {
+        return res.status(200)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/favorites', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    await User.updateOne(
+      { email: req.user },
+      { $set: { saved_list: req.body.data } }
     )
       .then(() => {
         return res.status(200)

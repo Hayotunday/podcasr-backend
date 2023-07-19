@@ -19,7 +19,6 @@ const UserSchema = new Schema({
   },
   refresh_token: {
     type: String,
-    unique: true
   },
   email_verified: {
     type: Boolean,
@@ -34,9 +33,11 @@ const UserSchema = new Schema({
   createdProfile: {
     type: Boolean,
   },
-  saved_list: {
-    type: Array,
-  },
+  saved_list: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    unique: [true, 'must be unique']
+  }],
   recent: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
