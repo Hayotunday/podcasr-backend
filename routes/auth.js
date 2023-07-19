@@ -32,14 +32,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: "User Email or Password doesn't match" })
     }
 
-    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "30d" })
-    const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
+    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET)
+    // const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
-    await User.updateOne(
-      { email: email },
-      { $set: { refresh_token: refreshToken } })
+    // await User.updateOne(
+    //   { email: email },
+    //   { $set: { refresh_token: refreshToken } })
 
-    res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+    // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
     return res.status(200).json({ accessToken, id: result._id })
   } catch (error) {
     return res.status(500).json({ message: "Server error!" })
@@ -48,21 +48,21 @@ router.post('/login', async (req, res) => {
 
 
 router.post('/logout', async (req, res) => {
-  const cookies = req.cookies
-  if (!cookies?.jwt) return res.sendStatus(204)
-  // console.log(cookies.jwt)
-  const refreshToken = cookies.jwt
+  // const cookies = req.cookies
+  // if (!cookies?.jwt) return res.sendStatus(204)
+  // // console.log(cookies.jwt)
+  // const refreshToken = cookies.jwt
 
-  const founduser = await User.findOne({ refresh_token: refreshToken })
-  if (!founduser) {
-    res.clearCookie('jwt', { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-    return res.sendStatus(204)
-  }
+  // const founduser = await User.findOne({ refresh_token: refreshToken })
+  // if (!founduser) {
+  //   res.clearCookie('jwt', { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+  //   return res.sendStatus(204)
+  // }
 
-  await User.updateOne(
-    { email: email },
-    { $set: { refresh_token: "" } }
-  )
+  // await User.updateOne(
+  //   { email: email },
+  //   { $set: { refresh_token: "" } }
+  // )
   res.clearCookie('jwt', { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
   res.sendStatus(204)
 });
@@ -82,7 +82,7 @@ router.post('/register', async (req, res) => {
     email_verified: false,
     image: "",
     profile_type: "",
-    refresh_token: "",
+    // refresh_token: "",
     createdProfile: false,
     saved_list: [],
     recent: []
@@ -220,8 +220,8 @@ router.patch('/verify-mail', async (req, res) => {
     await Token.deleteOne({ token: req.body.token })
 
     const { email } = userFound
-    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
-    const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
+    const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET)
+    // const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
     await User.updateOne(
       { email: email },
