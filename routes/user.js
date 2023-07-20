@@ -250,7 +250,8 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
         .catch((err) => { return res.status(400).json(err) })
     }
   } catch (error) {
-    return res.status(500).json("error: ", error)
+    console.log(err)
+    return res.sendStatus(500)
   }
 });
 
