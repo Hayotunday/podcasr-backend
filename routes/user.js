@@ -217,7 +217,6 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
         own_podcast: req.body.own_podcast,
         promo_expect: false,
       });
-      rs
       await newProfile.save()
         .then(async (profile) => {
           await User.findByIdAndUpdate(
