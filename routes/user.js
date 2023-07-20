@@ -168,6 +168,22 @@ router.get('/:id', async (req, res) => {
 
 
 // POST ROUTES
+router.post('/send-mail', confirmJwt, async (req, res) => {
+  const { email, text, sender } = req.body
+
+  try {
+    const message = `<div style="">
+                      <P>
+                        ${text} 
+                      </P>
+                    </div>`
+    mailer(email, message, sender)
+    return res.sendStatus(200)
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
 router.post('/profile-type/add', confirmJwt, async (req, res) => {
   const { profile_type } = req.body
 
@@ -249,7 +265,6 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
         .catch((err) => { return res.status(400).json(err) })
     }
   } catch (error) {
-    console.log(error)
     return res.sendStatus(500)
   }
 });

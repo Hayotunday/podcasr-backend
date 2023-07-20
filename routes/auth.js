@@ -122,12 +122,15 @@ router.post('/register', async (req, res) => {
           await mailer(email, message)
           return res.sendStatus(201);
         })
-        .catch((err) => { res.status(400).json('Error: ' + err) })
+        .catch((error) => {
+          console.log(error); res.status(400).json({ message: error })
+        })
     } else {
       return res.sendStatus(401)
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error!' });
+    console.log(error)
+    res.status(500).json({ message: error });
   }
 });
 

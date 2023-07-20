@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 
-export const mailer = async (receiver, message) => {
+export const mailer = async (receiver, message, sender = 'idowudanielayotunde@gmail.com') => {
   let transporter
   let mailOptions = {}
 
@@ -16,7 +16,7 @@ export const mailer = async (receiver, message) => {
   });
 
   mailOptions = {
-    from: "idowudanielayotunde@gmail.com",
+    from: sender,
     to: receiver,
     subject: 'Verify email',
     html: message
