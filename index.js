@@ -16,19 +16,20 @@ const port = process.env.PORT || 5000;
 const allowedOrigins = ['https://podcast-expert.vercel.app', 'http://localhost:5000'];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Check if the request's origin is in the allowed list
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
+  // origin: function (origin, callback) {
+  //   // Check if the request's origin is in the allowed list
+  //   if (allowedOrigins.includes(origin) || !origin) {
+  //     callback(null, true);
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'));
+  //   }
+  // },
   credentials: true, // This enables sending cookies in cross-origin requests
 };
 
 app.use(cors(corsOptions));
-// app.use(cors());
+// app.use(cors({ credentials: true, origin: '*' }));
 app.use(cookieParser())
 app.use(express.json());
 app.use(express.static('public'))

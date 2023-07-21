@@ -368,7 +368,7 @@ router.patch('/profile-type/image', confirmJwt, upload.single('image'), async (r
       { image: req.file.filename }
     )
       .then(() => {
-        return res.status(200).json(res)
+        return res.sendStatus(200)
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
