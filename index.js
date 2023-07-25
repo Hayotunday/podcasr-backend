@@ -32,7 +32,6 @@ app.use(cors(corsOptions));
 // app.use(cors({ credentials: true, origin: '*' }));
 app.use(cookieParser())
 app.use(express.json());
-app.use(express.static('public'))
 
 connectToDB();
 

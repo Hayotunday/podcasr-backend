@@ -1,6 +1,9 @@
+import dotenv from 'dotenv'
+dotenv.config();
 import express from "express";
 import multer from 'multer'
-import path from "path";
+import crypto from 'crypto'
+// import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
@@ -10,24 +13,37 @@ import Press from "../models/press.js";
 import { confirmJwt } from "../middleware/confirmjwt.js";
 import { mailer } from "../middleware/verifymail.js";
 
-const storage = multer.diskStorage({
-  destination: (req, file, callback) => {
-    callback(null, "public/Images")
-  },
-  filename: (req, file, callback) => {
-    callback(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
-  }
-})
+const router = express.Router();
+
+const storage = multer.memoryStorage()
 
 const upload = multer({
   storage: storage
 })
 
-const router = express.Router();
+// const randomImageName = () => {
+//   return crypto.randomBytes(32).toString('hex')
+// }
 
-// all routes in here are starting with /users
+// const bucketName = process.env.BUCKET_NAME
+// const bucketRegion = process.env.BUCKET_REGION
+// const bucketAccessKey = process.env.BUCKET_ACCESS_KEY
+// const bucketSecretKey = process.env.BUCKET_SECRET_ACCESS_KEY
 
-// User
+// const s3 = new S3Client({
+//   credentials: {
+//     accessKeyId: bucketAccessKey,
+//     secretAccessKey: bucketSecretKey
+//   },
+//   region: bucketRegion
+// })
+
+// import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+// const client = new S3Client(clientParams);
+// const command = new GetObjectCommand(getObjectParams);
+// const url = await getSignedUrl(client, command, { expiresIn: 3600 });
+
 router.get('/', async (req, res) => {
   try {
     await User.find()
@@ -94,7 +110,6 @@ router.get('/profiles', async (req, res) => {
     return res.sendStatus(500)
   }
 });
-
 
 router.get('/profile-type/my-profile', confirmJwt, async (req, res) => {
   try {
@@ -363,16 +378,28 @@ router.patch('/profile-type/image', confirmJwt, upload.single('image'), async (r
 
     if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
 
+    // const imageName = randomImageName()
+    // const params = {
+    //   Bucket: bucketName,
+    //   Key: imageName,
+    //   Body: req.file.buffer,
+    //   ContentType: req.file.mimetype
+    // }
+    // const command = new PutObjectCommand(params)
+    // await s3.send(command)
+
+    const imageName = req.file.buffer.toString('base64') === undefined ? "" : req.file.buffer.toString('base64');
+
     await User.updateOne(
       { email: req.user },
-      { image: req.file.filename }
+      { image: imageName }
     )
       .then(() => {
         return res.sendStatus(200)
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
-    return res.sendStatus(500)
+    return res.status(500).json(error)
   }
 });
 
@@ -448,9 +475,24 @@ router.patch('/profile-type/category', confirmJwt, async (req, res) => {
 // DELETE ROUTES
 router.delete('/:id', confirmJwt, async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id)
-      .then(() => { return res.json('User deleted!') })
-      .catch((err) => { return res.status(400).json('Error: ' + err) })
+    const userFound = await User.findById(req.params.id)
+
+    if (userFound.profile_type === "Podcaster") {
+      await User.findByIdAndDelete(req.params.id)
+      await Podcaster.deleteOne({ user: userFound._id })
+        .then(() => { return res.status(200).json('User deleted!') })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Guest") {
+      await User.findByIdAndDelete(req.params.id)
+      await Guest.deleteOne({ user: userFound._id })
+        .then(() => { return res.status(200).json('User deleted!') })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    } else if (userFound.profile_type === "Press") {
+      await User.findByIdAndDelete(req.params.id)
+      await Press.deleteOne({ user: userFound._id })
+        .then(() => { return res.status(200).json('User deleted!') })
+        .catch((err) => { return res.status(400).json('Error: ' + err) })
+    }
   } catch (error) {
     return res.sendStatus(500)
   }

@@ -103,6 +103,7 @@ router.post('/register', async (req, res) => {
           })
           await newToken.save()
           const url = `${process.env.BASE_URL}/verified?id=${_id}&token=${token}`
+          const subject = "Verify email"
           const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -119,7 +120,7 @@ router.post('/register', async (req, res) => {
                       <p>Link expires in 1 hour</p>
                     </div>`
 
-          await mailer(email, message)
+          await mailer(email, subject, message)
           return res.sendStatus(201);
         })
         .catch((error) => {
@@ -157,6 +158,7 @@ router.post('/resend-mail', async (req, res) => {
     })
     await newToken.save()
     const url = `${process.env.BASE_URL}/verified?id=${id}&token=${token}`
+    const subject = 'Verify email'
     const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -173,7 +175,7 @@ router.post('/resend-mail', async (req, res) => {
                     <p>Link expires in 1 hour</p>
                     </div>`
 
-    await mailer(email, message)
+    await mailer(email, subject, message)
     return res.sendStatus(200);
   } catch (error) {
     res.status(500).json({ message: 'Server error!' });
@@ -248,6 +250,7 @@ router.post('/password/forgot', async (req, res) => {
     await ResetCode.deleteMany({ user: _id })
 
     const code = crypto.randomInt(0, 99999).toString().padStart(5, "0")
+    const subject = 'Your password reset code'
     const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -262,7 +265,7 @@ router.post('/password/forgot', async (req, res) => {
                     <p>code expires in 1 hour</p>
                     </div>`
 
-    await mailer(email, message)
+    await mailer(email, subject, message)
 
     const newResetCode = await ResetCode({
       user: _id,
