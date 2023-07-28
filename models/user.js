@@ -17,9 +17,16 @@ const UserSchema = new Schema({
     require: [true, 'password is required!'],
     trim: true
   },
-  // refresh_token: {
-  //   type: String,
-  // },
+  info: {
+    type: Object,
+    default: {
+      age: "",
+      gender: "",
+      country: "",
+      city: "",
+      language: ""
+    }
+  },
   email_verified: {
     type: Boolean,
     require: [true, 'Email_verified is required!'],

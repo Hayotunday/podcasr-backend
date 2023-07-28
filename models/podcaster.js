@@ -12,7 +12,7 @@ const PodcasterSchema = new Schema({
   topic_categories: {
     type: Array,
   },
-  podcast_link: {
+  url: {
     type: String,
   },
   bio: {
@@ -23,26 +23,30 @@ const PodcasterSchema = new Schema({
   },
   social_media: {
     type: Object,
+    default: {
+      facebook: "",
+      instagram: "",
+      linkedin: "",
+      twitter: "",
+      youtube: ""
+    }
   },
-  transmission_date: {
-    type: [Date],
+  next_transmission: {
+    type: Object,
   },
-  guest_bio: {
+  headline: {
     type: String,
   },
-  booking_details: {
-    type: Array,
-  },
-  episode_links: {
+  interviews: {
     type: Array,
   },
   record_preference: {
     type: Array,
   },
-  promo_expect: {
+  recording: {
     type: Boolean
   },
-  need_guest: {
+  contact_me: {
     type: Boolean
   }
 })

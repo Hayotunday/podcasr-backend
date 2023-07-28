@@ -210,27 +210,26 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
 
     if (profile_type === "Podcaster") {
       const newProfile = new Podcaster({
-        podcast_name: req.body.podcast_name,
         user: req.body.user,
+        podcast_name: req.body.podcast_name,
         topic_categories: req.body.topic_categories,
-        podcast_link: req.body.podcast_link,
+        url: req.body.url,
         bio: req.body.bio,
         highlights: req.body.highlights,
         social_media: req.body.social_media,
-        transmission_date: req.body.transmission_date,
-        guest_bio: req.body.guest_bio,
-        booking_details: req.body.booking_details,
-        episode_links: req.body.episode_links,
+        next_transmission: req.body.next_transmission,
+        headline: req.body.headline,
+        interviews: req.body.interview,
         record_preference: req.body.record_preference,
-        promo_expect: req.body.promo_expect,
-        need_guest: req.body.need_guest
+        recording: req.body.recording,
+        contact_me: req.body.contact_me,
       });
 
       await newProfile.save()
         .then(async (profile) => {
           await User.findByIdAndUpdate(
             { _id: req.body.user },
-            { $set: { createdProfile: true } }
+            { $set: { createdProfile: true, info: req.body.info } }
           );
           return res.status(201).json(profile)
         })
@@ -238,21 +237,20 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
     } else if (profile_type === "Guest") {
       const newProfile = new Guest({
         user: req.body.user,
-        topic_categories: req.body.category,
+        topic_categories: req.body.topic_categories,
         short_bio: req.body.short_bio,
         mission: req.body.mission,
-        experience_bio: req.body.experience_bio,
+        headline: req.body.headline,
         social_media: req.body.social_media,
-        interview_links: req.body.interview_link,
+        interview_links: req.body.interview_links,
         record_preference: req.body.record_preference,
         own_podcast: req.body.own_podcast,
-        promo_expect: false,
       });
       await newProfile.save()
         .then(async (profile) => {
           await User.findByIdAndUpdate(
             { _id: req.body.user },
-            { $set: { createdProfile: true } }
+            { $set: { createdProfile: true, info: req.body.info } }
           );
           return res.status(201).json(profile)
         })
@@ -273,7 +271,7 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
         .then(async (profile) => {
           await User.findByIdAndUpdate(
             { _id: req.body.user },
-            { $set: { createdProfile: true } }
+            { $set: { createdProfile: true, info: req.body.info } }
           );
           return res.status(201).json(profile)
         })
@@ -313,39 +311,46 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
     if (profile_type === "Podcaster") {
       Podcaster.updateOne({ user: userFound._id }, {
         $set: {
-          podcast_name: req.body.podcast_name,
-          user: req.body.user,
-          podcast_link: req.body.podcast_link,
+          podcast_name: req.body.name,
+          topic_categories: req.body.topic_categories,
+          url: req.body.url,
           bio: req.body.bio,
           highlights: req.body.highlights,
           social_media: req.body.social_media,
-          guest_bio: req.body.guest_bio,
-          booking_details: req.body.booking_details,
-          episode_links: req.body.episode_links,
+          next_transmission: req.body.next_transmission,
+          headline: req.body.headline,
+          interviews: req.body.interview,
           record_preference: req.body.record_preference,
-          promo_expect: req.body.promo_expect,
-          need_guest: req.body.need_guest
+          recording: req.body.recording,
+          contact_me: req.body.contact_me,
         }
       })
-        .then((profile) => {
+        .then(async (profile) => {
+          await User.findByIdAndUpdate(
+            { _id: req.body.user },
+            { $set: { info: req.body.info } }
+          );
           return res.status(201).json(profile)
         })
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     } else if (profile_type === "Guest") {
       Guest.updateOne({ user: userFound._id }, {
         $set: {
-          user: req.body.user,
+          topic_categories: req.body.topic_categories,
           short_bio: req.body.short_bio,
           mission: req.body.mission,
-          experience_bio: req.body.experience_bio,
+          headline: req.body.headline,
           social_media: req.body.social_media,
-          interview_links: req.body.interview_link,
+          interview_links: req.body.interview_links,
           record_preference: req.body.record_preference,
           own_podcast: req.body.own_podcast,
-          promo_expect: false,
         }
       })
-        .then((profile) => {
+        .then(async (profile) => {
+          await User.findByIdAndUpdate(
+            { _id: req.body.user },
+            { $set: { info: req.body.info } }
+          );
           return res.status(201).json(profile)
         })
         .catch((err) => { return res.status(400).json('Error: ' + err) })

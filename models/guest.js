@@ -15,11 +15,18 @@ const GuestSchema = new Schema({
   mission: {
     type: String,
   },
-  experience_bio: {
+  headline: {
     type: String,
   },
   social_media: {
     type: Object,
+    default: {
+      facebook: "",
+      instagram: "",
+      linkedin: "",
+      twitter: "",
+      youtube: ""
+    }
   },
   interview_links: {
     type: Array,
@@ -28,12 +35,6 @@ const GuestSchema = new Schema({
     type: Array,
   },
   own_podcast: {
-    type: Boolean
-  },
-  contact_me: {
-    type: Boolean
-  },
-  podcast_alert: {
     type: Boolean
   }
 })
