@@ -8,6 +8,7 @@ import { connectToDB } from './connection.js'
 
 import userRoutes from './routes/user.js'
 import authRoutes from './routes/auth.js'
+import adminRoutes from './routes/admin.js'
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -37,5 +38,6 @@ connectToDB();
 
 app.use("/user", userRoutes)
 app.use("/auth", authRoutes)
+app.use("/admin", adminRoutes)
 
 app.listen(port, () => console.log(`SERVER RUNNING`))

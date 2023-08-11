@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config();
 import express from "express";
 import multer from 'multer'
-import crypto from 'crypto'
+import { ObjectId } from 'mongodb'
 // import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import User from "../models/user.js";
@@ -64,7 +64,7 @@ router.get('/profile', confirmJwt, async (req, res) => {
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
-    return res.sendStatus(500)
+    return res.status(500).json("server error")
   }
 });
 
@@ -97,17 +97,37 @@ router.get('/profile/favorites', confirmJwt, async (req, res) => {
 });
 
 router.get('/profiles', async (req, res) => {
+  const { category, location } = req.query
   try {
+    let profiles = []
+    if (category === "all") {
+      const guests = await Guest.find().populate('user')
+      const podcasters = await Podcaster.find().populate('user')
+      // const presses = await Press.find().populate('user')
 
-    const guests = await Guest.find().populate('user')
-    const podcasters = await Podcaster.find().populate('user')
-    const presses = await Press.find().populate('user')
+      const prof = [...guests, ...podcasters]
+      profiles = [...prof]
+      // profiles = location || location === "" ? [...prof] : prof.filter((i) => {
+      //   return i.user.info.country.toLowerCase() === location.toLowerCase()
+      // })
+    } else if (category === 'podcaster') {
+      const podcasters = await Podcaster.find().populate('user')
 
-    const profiles = [...guests, ...podcasters, ...presses]
+      profiles = location || location === "" ? [...podcasters] : podcasters.filter((i) => {
+        return i.user.info.country.toLowerCase() === location.toLowerCase()
+      })
+    } else if (category === 'guest') {
+      const guests = await Guest.find().populate('user')
 
+      profiles = location || location === "" ? [...guests] : guests.filter((i) => {
+        return i.user.info.country.toLowerCase() === location.toLowerCase()
+      })
+    }
+
+    console.log(profiles)
     return res.status(200).json(profiles)
   } catch (error) {
-    return res.sendStatus(500)
+    return res.status(500).json(error)
   }
 });
 
@@ -435,7 +455,27 @@ router.patch('/profile-type/favorites', confirmJwt, async (req, res) => {
 
     await User.updateOne(
       { email: req.user },
-      { $set: { saved_list: req.body.data } }
+      { $push: { saved_list: req.body.data } }
+    )
+      .then(() => {
+        return res.status(200)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/profile-type/unfavorites', confirmJwt, async (req, res) => {
+  try {
+    const userFound = await User.findOne({ email: req.user })
+
+    if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
+
+    // const id = ObjectId(req.body.data)
+    await User.updateOne(
+      { email: req.user },
+      { $pull: { saved_list: req.body.data } }
     )
       .then(() => {
         return res.status(200)

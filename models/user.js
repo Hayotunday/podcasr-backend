@@ -31,6 +31,10 @@ const UserSchema = new Schema({
     type: Boolean,
     require: [true, 'Email_verified is required!'],
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
   image: {
     type: String,
   },
