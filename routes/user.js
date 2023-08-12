@@ -124,7 +124,7 @@ router.get('/profiles', async (req, res) => {
       })
     }
 
-    console.log(profiles)
+    // console.log(profiles)
     return res.status(200).json(profiles)
   } catch (error) {
     return res.status(500).json(error)
