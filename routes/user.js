@@ -56,6 +56,36 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/location', async (req, res) => {
+  try {
+    await User.find()
+      .then((users) => {
+        const loc=[{option:""}]
+        for (let i = 0; i < users.length; i++) {
+          if(users[i].info.city !== ""){
+            loc.push({option: users[i].info.city})
+          }
+        }
+        let compare = (a, b) => {
+          if (a.option < b.option) {
+              return -1;
+          }
+          if (a.option > b.option) {
+              return 1;
+          }
+          return 0;
+        };
+        
+        const locations = loc.sort(compare)
+        
+        return res.status(200).json({ locations })
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
 router.get('/profile', confirmJwt, async (req, res) => {
   try {
     await User.findOne({ email: req.user })
@@ -97,30 +127,54 @@ router.get('/profile/favorites', confirmJwt, async (req, res) => {
 });
 
 router.get('/profiles', async (req, res) => {
-  const { category, location } = req.query
+  const { category, location, topic } = req.query
+  const { id } = req.body
+
   try {
     let profiles = []
     if (category === "all") {
-      const guests = await Guest.find().populate('user')
-      const podcasters = await Podcaster.find().populate('user')
-      // const presses = await Press.find().populate('user')
+      
+      if (topic === "") {
+        const guests = await Guest.find({user: {$ne : id}}).populate('user')
+        const podcasters = await Podcaster.find({user: {$ne : id}}).populate('user')
+        // presses = await Press.find().populate('user')
 
-      const prof = [...guests, ...podcasters]
-      profiles = [...prof]
-      // profiles = location || location === "" ? [...prof] : prof.filter((i) => {
+        const prof = [...guests, ...podcasters]
+        profiles = [...prof]
+      } else {
+        const guests = await Guest.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+        const podcasters = await Podcaster.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+        // presses = await Press.find().populate('user')
+
+        const prof = [...guests, ...podcasters]
+        profiles = [...prof]
+      }
+
+      // profiles = location === "" ? [...prof] : prof.filter((i) => {
       //   return i.user.info.country.toLowerCase() === location.toLowerCase()
       // })
     } else if (category === 'podcaster') {
-      const podcasters = await Podcaster.find().populate('user')
-
-      profiles = location || location === "" ? [...podcasters] : podcasters.filter((i) => {
-        return i.user.info.country.toLowerCase() === location.toLowerCase()
+      let podcasters
+      if (topic === "") {
+        podcasters = await Podcaster.find({user :{$ne : id}}).populate('user')
+      } else {
+        podcasters = await Podcaster.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+      }
+      
+      profiles = location === "" ? [...podcasters] : podcasters.filter((i) => {
+        const str = i.user.info.city.toLowerCase()
+        return str === location.toLowerCase()
       })
     } else if (category === 'guest') {
-      const guests = await Guest.find().populate('user')
+      let guests
+      if (topic === "") {
+        guests = await Guest.find({user: {$ne : id}}).populate('user')
+      } else{
+        guests = await Guest.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+      }
 
-      profiles = location || location === "" ? [...guests] : guests.filter((i) => {
-        return i.user.info.country.toLowerCase() === location.toLowerCase()
+      profiles = location === "" ? [...guests] : guests.filter((i) => {
+        return i.user.info.city.toLowerCase() === location.toLowerCase()
       })
     }
 

@@ -1,3 +1,5 @@
+import dotenv from 'dotenv'
+dotenv.config();
 import nodemailer from 'nodemailer'
 
 export const mailer = async (receiver, subject, message, sender = 'idowudanielayotunde@gmail.com') => {
@@ -10,8 +12,8 @@ export const mailer = async (receiver, subject, message, sender = 'idowudanielay
     port: 465,
     secure: true,
     auth: {
-      user: 'idowudanielayotunde@gmail.com',
-      pass: 'niosgwhnsfgoaije'
+      user: process.env.MAILER_USER,
+      pass: process.env.MAILER_PASS
     }
   });
 
