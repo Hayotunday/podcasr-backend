@@ -40,7 +40,7 @@ router.post('/login', async (req, res) => {
     //   { $set: { refresh_token: refreshToken } })
 
     // res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-    return res.status(200).json({ accessToken, id: result._id })
+    return res.status(200).json({ accessToken, id: result._id, mail: result.email })
   } catch (error) {
     return res.status(500).json({ message: "Server error!" })
   }

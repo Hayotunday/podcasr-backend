@@ -14,7 +14,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // // Define a list of origins that you want to allow, in this case, just 'https://podcast-expert.vercel.app'
-const allowedOrigins = ['https://podcast-expert.vercel.app', 'http://localhost:5000'];
+const allowedOrigins = ['https://podcast-expert.vercel.app', 'http://localhost:3000'];
 
 const corsOptions = {
   origin: '*',
