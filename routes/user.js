@@ -60,24 +60,47 @@ router.get('/location', async (req, res) => {
   try {
     await User.find()
       .then((users) => {
-        const loc=[{option:""}]
+        const loc = [{ option: "" }]
         for (let i = 0; i < users.length; i++) {
-          if(users[i].info.city !== ""){
-            loc.push({option: users[i].info.city})
+          if (users[i].info.city !== "") {
+            loc.push({ option: users[i].info.city })
           }
         }
         let compare = (a, b) => {
           if (a.option < b.option) {
-              return -1;
+            return -1;
           }
           if (a.option > b.option) {
-              return 1;
+            return 1;
           }
           return 0;
         };
-        
-        const locations = loc.sort(compare)
-        
+        function removeDuplicates(arr) {
+          // Declare a new array
+          let newArray = [];
+          // Declare an empty object
+          let uniqueObject = {};
+          let objOption = "";
+
+          // Loop for the array elements
+          for (let i in arr) {
+            // Extract the title
+            objOption = arr[i]['option'];
+            // Use the Option as the index
+            uniqueObject[objOption] = arr[i];
+          }
+
+          // Loop to push unique object into array
+          for (let i in uniqueObject) {
+            newArray.push(uniqueObject[i]);
+          }
+
+          return newArray;
+        }
+
+        const locat = loc.sort(compare)
+        const locations = removeDuplicates(locat)
+
         return res.status(200).json({ locations })
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
@@ -133,17 +156,17 @@ router.get('/profiles', async (req, res) => {
   try {
     let profiles = []
     if (category === "all") {
-      
+
       if (topic === "") {
-        const guests = await Guest.find({user: {$ne : id}}).populate('user')
-        const podcasters = await Podcaster.find({user: {$ne : id}}).populate('user')
+        const guests = await Guest.find({ user: { $ne: id } }).populate('user')
+        const podcasters = await Podcaster.find({ user: { $ne: id } }).populate('user')
         // presses = await Press.find().populate('user')
 
         const prof = [...guests, ...podcasters]
         profiles = [...prof]
       } else {
-        const guests = await Guest.find({user: {$ne : id}, topic_categories: topic}).populate('user')
-        const podcasters = await Podcaster.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+        const guests = await Guest.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
+        const podcasters = await Podcaster.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
         // presses = await Press.find().populate('user')
 
         const prof = [...guests, ...podcasters]
@@ -156,11 +179,11 @@ router.get('/profiles', async (req, res) => {
     } else if (category === 'podcaster') {
       let podcasters
       if (topic === "") {
-        podcasters = await Podcaster.find({user :{$ne : id}}).populate('user')
+        podcasters = await Podcaster.find({ user: { $ne: id } }).populate('user')
       } else {
-        podcasters = await Podcaster.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+        podcasters = await Podcaster.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
       }
-      
+
       profiles = location === "" ? [...podcasters] : podcasters.filter((i) => {
         const str = i.user.info.city.toLowerCase()
         return str === location.toLowerCase()
@@ -168,9 +191,9 @@ router.get('/profiles', async (req, res) => {
     } else if (category === 'guest') {
       let guests
       if (topic === "") {
-        guests = await Guest.find({user: {$ne : id}}).populate('user')
-      } else{
-        guests = await Guest.find({user: {$ne : id}, topic_categories: topic}).populate('user')
+        guests = await Guest.find({ user: { $ne: id } }).populate('user')
+      } else {
+        guests = await Guest.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
       }
 
       profiles = location === "" ? [...guests] : guests.filter((i) => {
@@ -451,30 +474,20 @@ router.patch('/profile-type/edit', confirmJwt, async (req, res) => {
   }
 });
 
-router.patch('/profile-type/image', confirmJwt, upload.single('image'), async (req, res) => {
+router.patch('/profile-type/image', confirmJwt, async (req, res) => {
   try {
     const userFound = await User.findOne({ email: req.user })
 
     if (!userFound) return res.status(403).json({ message: "User not found. Please register!" })
 
-    // const imageName = randomImageName()
-    // const params = {
-    //   Bucket: bucketName,
-    //   Key: imageName,
-    //   Body: req.file.buffer,
-    //   ContentType: req.file.mimetype
-    // }
-    // const command = new PutObjectCommand(params)
-    // await s3.send(command)
-
-    const imageName = req.file.buffer.toString('base64') === undefined ? "" : req.file.buffer.toString('base64');
+    const imageName = req.body.image;
 
     await User.updateOne(
       { email: req.user },
       { image: imageName }
     )
-      .then(() => {
-        return res.sendStatus(200)
+      .then((resp) => {
+        return res.status(200).json({ "image": imageName })
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
