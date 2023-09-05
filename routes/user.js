@@ -155,6 +155,7 @@ router.get('/profiles', async (req, res) => {
 
   try {
     let profiles = []
+    let prof = []
     if (category === "all") {
 
       if (topic === "") {
@@ -162,20 +163,23 @@ router.get('/profiles', async (req, res) => {
         const podcasters = await Podcaster.find({ user: { $ne: id } }).populate('user')
         // presses = await Press.find().populate('user')
 
-        const prof = [...guests, ...podcasters]
-        profiles = [...prof]
+        prof = [...guests, ...podcasters]
+        // profiles = [...prof]
       } else {
         const guests = await Guest.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
         const podcasters = await Podcaster.find({ user: { $ne: id }, topic_categories: topic }).populate('user')
         // presses = await Press.find().populate('user')
 
-        const prof = [...guests, ...podcasters]
-        profiles = [...prof]
+        prof = [...guests, ...podcasters]
+        // profiles = [...prof]
       }
 
-      // profiles = location === "" ? [...prof] : prof.filter((i) => {
-      //   return i.user.info.country.toLowerCase() === location.toLowerCase()
-      // })
+      profiles = location === "" ? [...prof] : prof.filter((i) => {
+        const locate = location.toLowerCase()
+        const userLocation = i.user.info.city.toLowerCase()
+        return userLocation === locate
+      })
+      console.log(profiles)
     } else if (category === 'podcaster') {
       let podcasters
       if (topic === "") {
