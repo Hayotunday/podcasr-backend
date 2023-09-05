@@ -128,7 +128,7 @@ router.get('/profile/recents', confirmJwt, async (req, res) => {
       select:
         'email name email_verified image profile_type',
     })
-      .then((rec) => { res.status(200).json(rec.recent) })
+      .then((result) => { res.status(200).json(result.recent) })
       .catch((err) => { console.log(err); res.status(400).json(err) })
   } catch (error) {
     return res.sendStatus(500)
@@ -283,13 +283,16 @@ router.get('/:id', async (req, res) => {
 router.post('/send-mail', confirmJwt, async (req, res) => {
   const { email, text, sender } = req.body
 
+  const response = await User.findOne({ email: email })
+
   try {
+    const subject = `Mail from ${response.name} from Podcast-Expert`
     const message = `<div style="">
                       <P>
                         ${text} 
                       </P>
                     </div>`
-    mailer(email, message, sender)
+    mailer(email, subject, message, sender)
     return res.sendStatus(200)
   } catch (error) {
     return res.sendStatus(500)
