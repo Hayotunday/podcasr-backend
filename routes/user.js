@@ -179,7 +179,7 @@ router.get('/profiles', async (req, res) => {
         const userLocation = i.user.info.city.toLowerCase()
         return userLocation === locate
       })
-      console.log(profiles)
+      // console.log(profiles)
     } else if (category === 'podcaster') {
       let podcasters
       if (topic === "") {
