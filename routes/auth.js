@@ -71,7 +71,7 @@ router.post('/logout', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { email, name, password } = req.body
 
-  const token = jwt.sign({ email }, "jwtSecret", { expiresIn: "30d" })
+  const token = jwt.sign({ email }, "jwtSecret")
   const pass = await bcrypt.hash(password, 10)
 
   const newUser = await new User({
@@ -297,36 +297,73 @@ router.post('/password/reset', async (req, res) => {
 
 
 // router.patch('/password/resend-code', async (req, res) => {
-//   try {
-//     const userFound = await User.findById(req.body.id)
-//     if (!userFound) return res.status(400).json("Invalid link")
+  //   try {
+    //     const userFound = await User.findById(req.body.id)
+    //     if (!userFound) return res.status(400).json("Invalid link")
 
-//     if (userFound.email_verified) return res.status(400).json("Invalid link")
+    //     if (userFound.email_verified) return res.status(400).json("Invalid link")
 
-//     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
-//     if (!tokenFound) return res.status(400).json("Invalid link")
+    //     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
+    //     if (!tokenFound) return res.status(400).json("Invalid link")
 
-//     await User.findByIdAndUpdate(
-//       req.body.id,
-//       { $set: { email_verified: true } }
-//     )
+    //     await User.findByIdAndUpdate(
+      //       req.body.id,
+      //       { $set: { email_verified: true } }
+    //     )
 //     await Token.deleteOne({ token: req.body.token })
 
-//     const { email } = userFound
-//     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
-//     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
+    //     const { email } = userFound
+    //     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
+    //     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
-//     await User.updateOne(
-//       { email: email },
-//       { $set: { refresh_token: refreshToken } }
-//     )
+    //     await User.updateOne(
+      //       { email: email },
+      //       { $set: { refresh_token: refreshToken } }
+    //     )
 
-//     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-//     return res.status(200).json({ accessToken })
-//   } catch (error) {
-//     return res.sendStatus(500)
-//   }
+    //     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+    //     return res.status(200).json({ accessToken })
+  //   } catch (error) {
+    //     return res.sendStatus(500)
+  //   }
 // });
+
+
+router.patch('/payment', async (req, res) => {
+  try {
+    const customers = await stripe.customers.list({
+      email: req.body.email,
+    });
+
+    if (customers) {
+      await stripe.customers.create({
+        email: req.body.email,
+        source: req.body.stripeToken,
+        name: req.body.name
+      })
+        .then((customer) => {
+          return stripe.charges.create({
+            amount: 33,
+            description: 'Subscription for podcast expert',
+            currency: 'GBP',
+            customer: customer.id
+          })
+        })
+        .then(async (charge) => {
+          console.log(charge)
+          await User.findByIdAndUpdate({ email: req.body.email }, { $set: { paid: true } })
+            .then(() => { return res.status(200).json({ message: "successful" }) })
+            .catch(() => { return res.sendStatus(500) })
+        })
+        .catch((err) => {
+          console.log(err)
+          return res.sendStatus(500)
+        })
+    }
+    } catch (error) {
+        return res.sendStatus(500)
+    }
+});
 
 
 router.post('/password/create', async (req, res) => {

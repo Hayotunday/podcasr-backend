@@ -38,6 +38,10 @@ const UserSchema = new Schema({
   image: {
     type: String,
   },
+  paid: {
+    type: Boolean,
+    default: false
+  },
   profile_type: {
     type: String,
   },

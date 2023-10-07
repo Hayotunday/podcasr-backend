@@ -1,5 +1,7 @@
 import express from "express";
 import bcrypt from 'bcrypt'
+import jwt from "jsonwebtoken";
+import { confirmJwt } from "../middleware/confirmjwt.js";
 
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
@@ -36,6 +38,72 @@ router.post('/', async (req, res) => {
     await User.findOne({ email: req.user })
       .then(() => { return res.sendStatus(200) })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.post('/create', confirmJwt, async (req, res) => {
+  const { password, email, profile_type, name, image } = req.body
+
+  const token = jwt.sign({ email }, "jwtSecret")
+  const pass = await bcrypt.hash(password, 10)
+
+  try {
+    const result = await User.findOne({ email: email })
+    if (result) {
+      return res.status(200).json({ message: "User already exists!" })
+    }
+
+    await new User({
+      email,
+      name,
+      password: pass,
+      token,
+      email_verified: true,
+      image,
+      profile_type,
+      paid: true,
+      createdProfile: true,
+      saved_list: [],
+      recent: []
+    }).save()
+      .then(async (user) => {
+        if (profile_type == - "Guest") {
+          await new Guest({
+            user: user._id,
+            topic_categories: [],
+            short_bio: "",
+            mission: "",
+            headline: "",
+            interview_links: [],
+            record_preference: [],
+            own_podcast: false,
+          }).save()
+          return res.status(201).json('Successfully created user');
+        } else {
+          await new Podcaster({
+            user: user._id,
+            podcast_name: "",
+            topic_categories: [],
+            url: "",
+            bio: "",
+            highlights: [],
+            next_transmission: {},
+            headline: "",
+            interviews: [],
+            record_preference: [],
+            recording: false,
+            contact_me: true
+          }).save()
+          // console.log(user)
+          return res.status(201).json('Successfully created user');
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(400).json({ message: error })
+      })
   } catch (error) {
     return res.sendStatus(500)
   }
