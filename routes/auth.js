@@ -104,6 +104,7 @@ router.post('/register', async (req, res) => {
           await newToken.save()
           const url = `${process.env.BASE_URL}/verified?id=${_id}&token=${token}`
           const subject = "Verify email"
+          const sender = "fiona@powpr.co.uk"
           const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -120,7 +121,7 @@ router.post('/register', async (req, res) => {
                       <p>Link expires in 1 hour</p>
                     </div>`
 
-          await mailer(email, subject, message)
+          await mailer(email, subject, message, sender)
           return res.sendStatus(201);
         })
         .catch((error) => {
@@ -159,6 +160,7 @@ router.post('/resend-mail', async (req, res) => {
     await newToken.save()
     const url = `${process.env.BASE_URL}/verified?id=${id}&token=${token}`
     const subject = 'Verify email'
+    const sender = "fiona@powpr.co.uk"
     const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -175,7 +177,7 @@ router.post('/resend-mail', async (req, res) => {
                     <p>Link expires in 1 hour</p>
                     </div>`
 
-    await mailer(email, subject, message)
+    await mailer(email, subject, message, sender)
     return res.sendStatus(200);
   } catch (error) {
     res.status(500).json({ message: 'Server error!' });
@@ -251,6 +253,7 @@ router.post('/password/forgot', async (req, res) => {
 
     const code = crypto.randomInt(0, 99999).toString().padStart(5, "0")
     const subject = 'Your password reset code'
+    const sender = "fiona@powpr.co.uk"
     const message = `<div style="">
                       <h4>
                       Good day ${name},
@@ -265,7 +268,7 @@ router.post('/password/forgot', async (req, res) => {
                     <p>code expires in 1 hour</p>
                     </div>`
 
-    await mailer(email, subject, message)
+    await mailer(email, subject, message, sender)
 
     const newResetCode = await ResetCode({
       user: _id,
@@ -297,35 +300,35 @@ router.post('/password/reset', async (req, res) => {
 
 
 // router.patch('/password/resend-code', async (req, res) => {
-  //   try {
-    //     const userFound = await User.findById(req.body.id)
-    //     if (!userFound) return res.status(400).json("Invalid link")
+//   try {
+//     const userFound = await User.findById(req.body.id)
+//     if (!userFound) return res.status(400).json("Invalid link")
 
-    //     if (userFound.email_verified) return res.status(400).json("Invalid link")
+//     if (userFound.email_verified) return res.status(400).json("Invalid link")
 
-    //     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
-    //     if (!tokenFound) return res.status(400).json("Invalid link")
+//     const tokenFound = await Token.findOne({ user: req.body.id, token: req.body.token })
+//     if (!tokenFound) return res.status(400).json("Invalid link")
 
-    //     await User.findByIdAndUpdate(
-      //       req.body.id,
-      //       { $set: { email_verified: true } }
-    //     )
+//     await User.findByIdAndUpdate(
+//       req.body.id,
+//       { $set: { email_verified: true } }
+//     )
 //     await Token.deleteOne({ token: req.body.token })
 
-    //     const { email } = userFound
-    //     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
-    //     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
+//     const { email } = userFound
+//     const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "24h" })
+//     const refreshToken = jwt.sign({ email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "28h" })
 
-    //     await User.updateOne(
-      //       { email: email },
-      //       { $set: { refresh_token: refreshToken } }
-    //     )
+//     await User.updateOne(
+//       { email: email },
+//       { $set: { refresh_token: refreshToken } }
+//     )
 
-    //     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
-    //     return res.status(200).json({ accessToken })
-  //   } catch (error) {
-    //     return res.sendStatus(500)
-  //   }
+//     res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 })
+//     return res.status(200).json({ accessToken })
+//   } catch (error) {
+//     return res.sendStatus(500)
+//   }
 // });
 
 
@@ -360,9 +363,9 @@ router.patch('/payment', async (req, res) => {
           return res.sendStatus(500)
         })
     }
-    } catch (error) {
-        return res.sendStatus(500)
-    }
+  } catch (error) {
+    return res.sendStatus(500)
+  }
 });
 
 

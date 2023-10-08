@@ -14,8 +14,6 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { password, email } = req.body
 
-  console.log(req.body)
-
   try {
     const result = await User.findOne({ email: email })
     if (result === null) {
@@ -69,7 +67,7 @@ router.post('/create', confirmJwt, async (req, res) => {
       recent: []
     }).save()
       .then(async (user) => {
-        if (profile_type == - "Guest") {
+        if (profile_type === "Guest") {
           await new Guest({
             user: user._id,
             topic_categories: [],
@@ -80,7 +78,10 @@ router.post('/create', confirmJwt, async (req, res) => {
             record_preference: [],
             own_podcast: false,
           }).save()
-          return res.status(201).json('Successfully created user');
+            .then(() => {
+              return res.status(201).json('Successfully created user');
+            })
+            .catch((err) => { console.log(err) })
         } else {
           await new Podcaster({
             user: user._id,
@@ -96,12 +97,13 @@ router.post('/create', confirmJwt, async (req, res) => {
             recording: false,
             contact_me: true
           }).save()
-          // console.log(user)
-          return res.status(201).json('Successfully created user');
+            .then((e) => {
+              return res.status(201).json('Successfully created user');
+            })
+            .catch((err) => { console.log(err) })
         }
       })
       .catch((error) => {
-        console.log(error);
         res.status(400).json({ message: error })
       })
   } catch (error) {
@@ -124,12 +126,11 @@ router.post('/copy-db', async (req, res) => {
   }
 });
 
+
 // PATCH ROUTES
 router.patch('/', async (req, res) => {
   const { newPass, password, email, id } = req.body
   const encryptedPass = await bcrypt.hash(newPass, 10)
-
-  console.log(req.body)
 
   try {
     const result = await User.findOne({ email: email })
@@ -151,6 +152,33 @@ router.patch('/', async (req, res) => {
       { $set: { password: encryptedPass } }
     )
     await User.findOne({ email: req.user })
+      .then(() => { return res.sendStatus(200) })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.patch('/make-admin', async (req, res) => {
+  const { password, email, id } = req.body
+
+  try {
+    const result = await User.findOne({ email: email })
+    if (result === null) return res.status(401).json({ message: "User not found!" })
+
+    // compare password
+    const checkPassword = await bcrypt.compare(password, result.password)
+
+    // incorrect password
+    if (!checkPassword || result.email !== email) {
+      // "User Email or Password doesn't match" 401
+      return res.status(401).json({ message: "User Email or Password doesn't match" })
+    }
+
+    await User.findByIdAndUpdate(
+      id,
+      { $set: { isAdmin: true } }
+    )
       .then(() => { return res.sendStatus(200) })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
