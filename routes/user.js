@@ -8,6 +8,7 @@ import { ObjectId } from 'mongodb'
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
 import Podcaster from "../models/podcaster.js";
+import Featured from "../models/featured.js";
 import Press from "../models/press.js";
 
 import { confirmJwt } from "../middleware/confirmjwt.js";
@@ -102,6 +103,30 @@ router.get('/location', async (req, res) => {
         const locations = removeDuplicates(locat)
 
         return res.status(200).json({ locations })
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.get('/featured', async (req, res) => {
+  try {
+    await Featured.find().populate()
+      .then((feature) => {
+        return res.status(200).json(feature)
+      })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.get('/featured_populate', async (req, res) => {
+  try {
+    await Featured.find().populate()
+      .then((feature) => {
+        return res.status(200).json(feature)
       })
       .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
@@ -385,6 +410,8 @@ router.post('/profile-type/add', confirmJwt, async (req, res) => {
     return res.sendStatus(500)
   }
 });
+
+
 
 // PATCH ROUTES
 router.patch('/profile-type', confirmJwt, async (req, res) => {

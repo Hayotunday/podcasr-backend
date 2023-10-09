@@ -1,11 +1,13 @@
 import express from "express";
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken";
+
 import { confirmJwt } from "../middleware/confirmjwt.js";
 
 import User from "../models/user.js";
 import Guest from "../models/guest.js";
 import Podcaster from "../models/podcaster.js";
+import Featured from "../models/featured.js";
 
 const router = express.Router();
 
@@ -126,6 +128,18 @@ router.post('/copy-db', async (req, res) => {
   }
 });
 
+router.post('/featured', async (req, res) => {
+  const { id } = req.body
+
+  try {
+    await new Featured({ user: id }).save()
+      .then(() => { return res.status(200).json("Successfully added user to Featured!") })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
 
 // PATCH ROUTES
 router.patch('/', async (req, res) => {
@@ -219,6 +233,18 @@ router.delete('/', async (req, res) => {
         .then(() => { return res.status(200).json('User deleted!') })
         .catch((err) => { return res.status(400).json('Error: ' + err) })
     }
+  } catch (error) {
+    return res.sendStatus(500)
+  }
+});
+
+router.delete('/featured/:user', async (req, res) => {
+  const user = req.params.user
+
+  try {
+    await Featured.deleteMany({ user })
+      .then(() => { return res.status(200).json('Successfully removed User from Featured!') })
+      .catch((err) => { return res.status(400).json('Error: ' + err) })
   } catch (error) {
     return res.sendStatus(500)
   }

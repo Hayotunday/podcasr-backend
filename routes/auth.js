@@ -4,6 +4,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt'
 import crypto from 'crypto'
+import stripe from '../stripe.js'
 
 import User from "../models/user.js";
 import Token from '../models/token.js'
@@ -332,39 +333,25 @@ router.post('/password/reset', async (req, res) => {
 // });
 
 
-router.patch('/payment', async (req, res) => {
+router.post('/payment', async (req, res) => {
   try {
-    const customers = await stripe.customers.list({
-      email: req.body.email,
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+          price: 'price_1NyYTAIeCkjlt8VXIlzBFToG',
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.BASE_URL}/profile`,
+      cancel_url: `${process.env.BASE_URL}/profile`,
+      automatic_tax: { enabled: true },
     });
 
-    if (customers) {
-      await stripe.customers.create({
-        email: req.body.email,
-        source: req.body.stripeToken,
-        name: req.body.name
-      })
-        .then((customer) => {
-          return stripe.charges.create({
-            amount: 33,
-            description: 'Subscription for podcast expert',
-            currency: 'GBP',
-            customer: customer.id
-          })
-        })
-        .then(async (charge) => {
-          console.log(charge)
-          await User.findByIdAndUpdate({ email: req.body.email }, { $set: { paid: true } })
-            .then(() => { return res.status(200).json({ message: "successful" }) })
-            .catch(() => { return res.sendStatus(500) })
-        })
-        .catch((err) => {
-          console.log(err)
-          return res.sendStatus(500)
-        })
-    }
+    return res.json(session.url);
   } catch (error) {
-    return res.sendStatus(500)
+    res.status(500).json({ error: error.message });
   }
 });
 
