@@ -355,7 +355,8 @@ router.post('/payment', async (req, res) => {
       line_items: [
         {
           // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
-          price: 'price_1NyYTAIeCkjlt8VXIlzBFToG',
+          // price: 'price_1NyYTAIeCkjlt8VXIlzBFToG',
+          price: 'price_1Nz5YpIeCkjlt8VXSP6ab4l2',
           quantity: 1,
         },
       ],
