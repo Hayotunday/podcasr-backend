@@ -187,8 +187,8 @@ router.post('/resend-mail', async (req, res) => {
 });
 
 
-router.get('/exists', async (req, res) => {
-  const { email } = req.body
+router.get('/exists/:email', async (req, res) => {
+  const { email } = req.params
   try {
     // Check if user exists
     const userExists = await User.findOne({ email })
@@ -351,12 +351,19 @@ router.post('/password/reset', async (req, res) => {
 router.post('/payment', async (req, res) => {
   const { id, verified } = req.body
   try {
+    const router = async () => {
+      await User.findByIdAndUpdate(id, { $set: { paid: true } })
+      if (verified) {
+        return `${process.env.BASE_URL}/profile`
+      } else {
+        return `${process.env.BASE_URL}/create-profile`
+      }
+    }
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
           // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
           price: process.env.PRICE_ID,
-          currency: 'GBP',
           quantity: 1,
         },
       ],
@@ -364,9 +371,12 @@ router.post('/payment', async (req, res) => {
       success_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/create-profile`,
       cancel_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/login`,
       automatic_tax: { enabled: true },
+    }).then(async (response) => {
+      console.log(response)
+      if (response.payment_status === 'paid') await User.findByIdAndUpdate(id, { $set: { paid: true } })
+    }).catch(err => {
+      console.log(err.message)
     });
-
-    await User.findByIdAndUpdate(id, { $set: { paid: true } })
 
     return res.json(session.url);
   } catch (error) {
