@@ -188,13 +188,13 @@ router.post('/resend-mail', async (req, res) => {
 
 
 router.get('/exists', async (req, res) => {
-  const { token } = req.body
+  const { email } = req.body
   try {
     // Check if user exists
-    const userExists = await User.findOne({ token })
+    const userExists = await User.findOne({ email })
 
-    if (userExists) return res.status(200).json(true)
-    return res.status(200).json(false)
+    if (userExists) return res.status(200).json({ userExists, exists: true })
+    return res.status(200).json({ userExists, exists: false })
   } catch (error) {
     res.status(500).json({ message: 'Server error!' });
   }
