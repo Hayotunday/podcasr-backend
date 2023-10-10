@@ -11,6 +11,7 @@ import Token from '../models/token.js'
 import ResetCode from '../models/resetcode.js';
 
 import { mailer } from '../middleware/verifymail.js';
+import { truncate } from 'fs';
 
 const router = express.Router();
 
@@ -186,6 +187,20 @@ router.post('/resend-mail', async (req, res) => {
 });
 
 
+router.get('/exists', async (req, res) => {
+  const { token } = req.body
+  try {
+    // Check if user exists
+    const userExists = await User.findOne({ token })
+
+    if (userExists) return res.status(200).json(true)
+    return res.status(200).json(false)
+  } catch (error) {
+    res.status(500).json({ message: 'Server error!' });
+  }
+});
+
+
 router.get('/refresh', async (req, res) => {
   const cookies = req.cookies
   if (!cookies?.jwt) return res.status(401).json({ message: "No access token" })
@@ -334,6 +349,7 @@ router.post('/password/reset', async (req, res) => {
 
 
 router.post('/payment', async (req, res) => {
+  const { id, verified } = req.body
   try {
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -344,10 +360,12 @@ router.post('/payment', async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.BASE_URL}/profile`,
-      cancel_url: `${process.env.BASE_URL}/profile`,
+      success_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/create-profile`,
+      cancel_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/login`,
       automatic_tax: { enabled: true },
     });
+
+    await User.findByIdAndUpdate(id, { $set: { paid: true } })
 
     return res.json(session.url);
   } catch (error) {
