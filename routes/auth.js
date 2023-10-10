@@ -356,6 +356,7 @@ router.post('/payment', async (req, res) => {
         {
           // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
           price: process.env.PRICE_ID,
+          currency: 'GBP',
           quantity: 1,
         },
       ],
