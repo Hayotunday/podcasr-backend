@@ -370,7 +370,7 @@ router.post('/payment', async (req, res) => {
       console.log(err.message)
     });
 
-    const redirectUrl = 'https://checkout.stripe.com/c/pay/cs_live_a194MXsfO5xqRLBrEvfTQnVT1321RaPerxcowJTuZKuX82TgoR1GfHW5oR#fidkdWxOYHwnPyd1blppbHNgWjA0ST09TGNMYEZub2lxPVNdQ0YyY3QycXRCVzM3T21QYW1WTlx0YUpsRlFfZ1VJQj1%2FN39xaWNCcFdAcENNdl1yTjBLZk90UkFxa3Z2UzZjNz1yT3duSjJpNTU2b3MxTU1sUycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl'
+    const redirectUrl = process.env.STRIPE_REDIRECT_URL
     const sessionUrl = session?.url || redirectUrl
 
     return res.json(sessionUrl);
