@@ -363,17 +363,22 @@ router.post('/payment', async (req, res) => {
       success_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/create-profile`,
       cancel_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/login`,
       automatic_tax: { enabled: true },
-    }).then(async (response) => {
-      // console.log(response)
-      if (response.payment_status === 'paid') await User.findByIdAndUpdate(id, { $set: { paid: true } })
-    }).catch(err => {
-      console.log(err.message)
     });
+
+    // .then(async (response) => {
+    //   // console.log(response)
+    //   if (response.payment_status === 'paid') await User.findByIdAndUpdate(id, { $set: { paid: true } })
+    // }).catch(err => {
+    //   console.log(err.message)
+    // });
+    if (session && session.url) {
+      return res.json(session.url);
+    } else {
+      throw new Error('Invalid session object or missing URL.');
+    }
 
     // const redirectUrl = process.env.STRIPE_REDIRECT_URL
     // const sessionUrl = session?.url || redirectUrl
-
-    return res.json(session.url);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
