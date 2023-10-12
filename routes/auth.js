@@ -351,14 +351,6 @@ router.post('/password/reset', async (req, res) => {
 router.post('/payment', async (req, res) => {
   const { id, verified } = req.body
   try {
-    const router = async () => {
-      await User.findByIdAndUpdate(id, { $set: { paid: true } })
-      if (verified) {
-        return `${process.env.BASE_URL}/profile`
-      } else {
-        return `${process.env.BASE_URL}/create-profile`
-      }
-    }
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -372,13 +364,16 @@ router.post('/payment', async (req, res) => {
       cancel_url: verified ? `${process.env.BASE_URL}/profile` : `${process.env.BASE_URL}/login`,
       automatic_tax: { enabled: true },
     }).then(async (response) => {
-      console.log(response)
+      // console.log(response)
       if (response.payment_status === 'paid') await User.findByIdAndUpdate(id, { $set: { paid: true } })
     }).catch(err => {
       console.log(err.message)
     });
 
-    return res.json(session.url);
+    const redirectUrl = 'https://checkout.stripe.com/c/pay/cs_live_a194MXsfO5xqRLBrEvfTQnVT1321RaPerxcowJTuZKuX82TgoR1GfHW5oR#fidkdWxOYHwnPyd1blppbHNgWjA0ST09TGNMYEZub2lxPVNdQ0YyY3QycXRCVzM3T21QYW1WTlx0YUpsRlFfZ1VJQj1%2FN39xaWNCcFdAcENNdl1yTjBLZk90UkFxa3Z2UzZjNz1yT3duSjJpNTU2b3MxTU1sUycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl'
+    const sessionUrl = session?.url || redirectUrl
+
+    return res.json(sessionUrl);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

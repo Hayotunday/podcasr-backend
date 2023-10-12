@@ -8,7 +8,7 @@ export const mailer = async (receiver, subject, message, sender = 'fiona@powpr.c
 
   transporter = nodemailer.createTransport({
     service: 'gmail',
-    host: "smtp.gmail.com",
+    host: "smtp.powpr.co.uk",
     port: 465,
     secure: true,
     auth: {
