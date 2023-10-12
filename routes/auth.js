@@ -370,10 +370,10 @@ router.post('/payment', async (req, res) => {
       console.log(err.message)
     });
 
-    const redirectUrl = process.env.STRIPE_REDIRECT_URL
-    const sessionUrl = session?.url || redirectUrl
+    // const redirectUrl = process.env.STRIPE_REDIRECT_URL
+    // const sessionUrl = session?.url || redirectUrl
 
-    return res.json(sessionUrl);
+    return res.json(session.url);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
